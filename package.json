@@ -1,0 +1,25 @@
+{
+  "name": "neb-mail",
+  "version": "1.0.0",
+  "description": "some smart contracts for nas blockchain ==========================================",
+  "main": "webpack.config.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git"
+  },
+  "author": "zoowii",
+  "license": "MIT",
+  "dependencies": {
+    "eccrypto": "^1.0.3",
+    "ecdh": "^0.1.1",
+    "elliptic": "^6.4.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^2.1.3"
+  }
+}

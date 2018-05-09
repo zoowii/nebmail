@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=0.5, maximum-scale=0.5, minimum-scale=0.5, user-scalable=no">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="full-screen" content="yes">
+
+    <title>Super Dictionary</title>
+    <link rel="stylesheet" href="lib/bootstrap-4.0.0-dist/css/bootstrap.min.css">
+    <link rel=stylesheet href=css/base.css>
+    <link rel=stylesheet href=css/ui-block.css>
+
+    <script src="lib/jquery-3.3.1.min.js"></script>
+    <script src=lib/nebPay.js></script>
+    <script src=lib/bootstrap-4.0.0-dist/js/bootstrap.min.js></script>
+    <script src=lib/nebulas.js></script>
+    <script src="lib/jsencrypt.min.js"></script>
+    <style>
+        .logo {
+            width: 60%;
+            height: 80px;
+            margin: auto;
+        }
+
+        .name {
+            text-align: center;
+            font-size: 66px;
+            text-shadow: 3px 5px grey, 1px 1px #333;
+        }
+
+        .img {
+            width: 48%;
+            height: 53%;
+            margin: auto;
+            margin-top: 38px;
+        }
+
+        .img img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .search {
+            width: 80%;
+            height: 100px;
+            margin: auto;
+        }
+
+        .noExtension {
+            width: 60%;
+            height: 100px;
+            margin: auto;
+            color: red;
+            font-size: 23px;
+        }
+
+        #search_value {
+            width: 80%;
+            height: 50px;
+            box-shadow: 3px 5px grey, 1px 1px #333;
+        }
+
+        .search button {
+            width: 18%;
+            height: 50px;
+            margin-left: 6px;
+            box-shadow: 3px 5px grey, 1px 1px #333;
+        }
+
+        @keyframes rotate {
+            0% { transform:rotateY(0deg);}
+            25% { transform:rotateY(180deg);}
+            50% { transform:rotateY(0deg);}
+            75% { transform:rotateY(180deg);}
+            100% { transform:rotateY(0deg);}
+        }
+
+        .logo_rotate {
+            /*
+            animation: rotate 10s infinite;
+            animation-fill-mode: forwards;
+            animation-timing-function: linear;
+                */
+            /*  当动画结束时，让<div>元素保留上一个关键帧的样式值 */
+        }
+
+        .result_success {
+            width: 60%;
+            margin: auto;
+            font-size: 22px
+        }
+
+        .result_faile{
+            width: 60%;
+            margin: auto;
+            font-size: 22px
+        }
+
+        .add_banner{
+            width: 80%;
+            margin: auto;
+        }
+
+        .add_banner input{
+            width: 80%;
+            height: 50px;
+            box-shadow: 3px 5px grey, 1px 1px #333;
+        }
+
+        .add_banner button{
+            width: 18%;
+            height: 50px;
+            margin-left: 6px;
+            box-shadow: 3px 5px grey, 1px 1px #333;
+        }
+
+        #search_banner{
+            font-size: 50px;
+            border-bottom: 1px solid black;
+        }
+
+        p{
+            text-indent:2em;
+            font-size: 30px;
+        }
+
+        .hide{
+            display: none;
+        }
+
+        .contenner{
+            background: url("img/bg.jpg");
+            height: 1700px;
+        }
+
+        .author{
+            text-align: right;
+        }
+        .author p{
+            display: inline-block;
+            font-size: 18px;
+        }
+        .qr_code>div {
+            display: inline-block;
+        }
+
+        .qr_code>.display-none {
+            display: none;
+        }
+
+        .transaction {
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+<div class="contenner">
+    <div class="logo">
+        <img src="img/logo.png" style="width: 40px; height: 40px;margin-top: 38px; float: left;" alt="">
+        <div class="name" style="font-size: 40px;">星云邮件，一个去中心化的加密邮件服务</div>
+    </div>
+    <div class="noExtension" id="noExtension">
+        NOTE: 为了使用星云邮件服务，请先安装 <a target="_blank" href="https://github.com/ChengOrangeJu/WebExtensionWallet">WebExtensionWallet</a>
+    </div>
+    <div class="result_success">
+        <div class="author">
+            <p>捐赠地址: </p> <p>n1Umdtjb2BEVT1EqWnz3FwtkcD4NcpNfmg4</p>
+        </div>
+    </div>
+
+    <div class="result_success hide">
+        <div id=search_banner></div>
+        <p id=search_result> wait for content </p>
+        <div class="author">
+            <i><p> Author:</p> <p id=search_result_author> n1Umdtjb2BEVT1EqWnz3FwtkcD4NcpNfmg4</p></i>
+        </div>
+    </div>
+
+
+    <div class="add_banner">
+        <button id="toggle-wallet-show-btn">显示/隐藏钱包</button>
+        <div class="hide" id="neb-wallet-panel">
+                <div class="container select-wallet-file"></div>
+
+                <div id=walletinfo class="container transaction">
+                    <div class=row>
+                        <div class=col>
+                            <div class=form-group>
+                                <label for=address data-i18n=wallet-info/your-addr>Your Address</label>
+                                <input type=text class=form-control id=address disabled>
+                            </div>
+                            <div class=form-group>
+                                <label for=amount data-i18n=wallet-info/acc-balance>Account Balance : </label>
+                                <input type=text id=amount class=form-control disabled>
+                            </div>
+                            <div class=form-group>
+                                <label for=keystore>
+                                    <span data-i18n=keystore-file>Keystore File</span>
+                                    (JSON / Recommended / Encrypted)
+                                </label>
+                                <button type=submit class="btn btn-default col-xs-12 col-sm-12 col-md-12 text-center" id=keystore data-i18n=download>Download</button>
+                            </div>
+                            <div class=form-group>
+                                <label for=password data-i18n=wallet-info/private-key>Private Key (unencrypted)</label>
+                                <input type=password id=password class=form-control disabled>
+                                <div>
+                                    <input id=togglePassword type=checkbox>
+                                    <label for=togglePassword>visible</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col qr_code">
+                            <div class=text-center>
+                                <label for=addressqr data-i18n=wallet-info/your-addr>Your Address</label>
+                                <div class=form-group id=addressqr></div>
+                            </div>
+                            <div class="display-none key_qr text-center">
+                                <label for=privateqr data-i18n=wallet-info/private-key>Private Key (unencrypted)</label>
+                                <div class=form-group id=privateqr></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    <script src=lib/jquery.qrcode.min.js data-depends=jquery></script>
+    <script src=lib/bootbox.min.js data-depends="bootstrap jquery.slim"></script>
+    <script src=lib/Blob.js></script>
+    <script src=lib/FileSaver.min.js></script>
+    <script src=js/1-localSave.js></script>
+    <script src=js/home.v1.js></script>
+    <script src=js/i18n.js data-depends=jquery.slim></script>
+    <script src=js/ui-block.js data-depends="bootbox blockies jquery.slim i18n.js nebulas.js"></script>
+    <script>
+    var nebulas = require("nebulas"),
+            Account = nebulas.Account,
+            Neb = nebulas.Neb,
+            Transaction = nebulas.Transaction,
+            Utils = nebulas.Utils,
+            neb = new Neb(),
+            gAccount, gFileJson;
+
+        neb.setRequest(new nebulas.HttpRequest(localSave.getItem("apiPrefix") || "https://mainnet.nebulas.io/"));
+        $("#keystore").on("click", onClickKeystore);
+        $("#togglePassword").on("change", onChangeTogglePassword);
+
+        uiBlock.insert({
+            footer: ".footer",
+            header: ".header",
+            logoMain: ".logo-main",
+            selectWalletFile: [".select-wallet-file", onUnlockFile]
+        });
+
+        var currentAccount = null;
+
+        function onUnlockFile(swf, fileJson, account, password) {
+            try {
+                gAccount = account;
+                gFileJson = fileJson;
+                account.fromKey(fileJson, password);
+
+                currentAccount = account;
+
+                $("#register_domain_address_input").val(account.getAddressString());
+                $("#register_domain_pubkey_input").val(account.getPublicKeyString());
+            } catch (e) {
+                // this catches e thrown by nebulas.js!account
+
+                bootbox.dialog({
+                    backdrop: true,
+                    onEscape: true,
+                    message: localSave.getItem("lang") == "en" ? e : "keystore 文件错误, 或者密码错误",
+                    size: "large",
+                    title: "Error"
+                });
+            }
+        }
+
+        function onClickKeystore() {
+            var blob = new Blob([JSON.stringify(gFileJson)], { type: "application/json; charset=utf-8" });
+            saveAs(blob, gAccount.getAddressString());
+        }
+
+        function onChangeTogglePassword(e) {
+            if (e.target.checked) {
+                $("#password").prop("type", "text");
+                $(".key_qr").removeClass("display-none");
+            } else {
+                $("#password").prop("type", "password");
+                $(".key_qr").addClass("display-none");
+            }
+        }
+    </script>
+        </div>
+    </div>
+
+    
+    <div style="width: 80%; margin: 0 auto;">
+        <span>你的NAS地址: </span>
+        <input type="text" id="register_domain_address_input" style="width: 100%; display: block;" placeholder="在此处贴上你的NAS地址" value=""/>
+        <span>你的NAS公钥: </span>
+        <textarea rows="3" style="width: 100%" id="register_domain_pubkey_input" placeholder="在此处贴上你的NAS公钥"></textarea>
+        <!-- <button id="open_wallet_to_get_pub_key_btn" style="    margin: 0 auto;
+        display: block;
+        width: 200px;
+        height: 40px;
+        background: #940f2d;
+        color: white;">打开钱包</button> -->
+    </div>
+
+    
+    <div class="add_banner">
+        <h4 style="margin: 0 auto;
+        width: 100%;
+        padding: 20px 0">在星云链上注册域名服务</h4>
+        <div>
+                <input type="text" id="register_domain_input" style="width: 50%;" placeholder="域名(只能包含字母或数字并且以字母开头)">
+                <span style="font-weight: bold;
+                font-size: 28px;
+                padding-left: 5px;">.nas</span>
+                <button id="register_domain_btn">注册</button>
+        </div>
+    </div>
+
+    <div class="add_banner">
+        <h4 style="margin: 0 auto;
+        width: 100%;
+        padding: 20px 0">在星云链上查看域名信息</h4>
+        <div>
+                <input type="text" id="query_domain_input" style="width: 50%;" placeholder="域名(只能包含字母或数字并且以字母开头)">
+                <span style="font-weight: bold;
+                font-size: 28px;
+                padding-left: 5px;">.nas</span>
+                <button id="query_domain_btn">查询</button>
+        </div>
+        <div class="hide" id="query_domain_info_result_panel" style="color: red; padding: 10px">
+            <span>域名拥有者：</span> <span class="-domain-owner-span"></span>
+            <br>
+            <span>域名关联数据:</span>
+            <br>
+            <div class="-domain-content-panel"></div>
+            <br>
+            <span>域名: </span>
+            <span class="-domain-host-span"></span><span>.nas</span>
+            <br>
+        </div>
+    </div>
+
+    <div class="add_banner">
+            <h4 style="margin: 0 auto;
+            width: 100%;
+            padding: 20px 0">在星云链上查看地址拥有的域名</h4>
+            <div>
+                    <input type="text" id="query_user_domains_input" style="width: 50%;" placeholder="输入用户地址">
+                    <button id="query_user_domains_btn">查询</button>
+            </div>
+            <div class="hide" id="query_user_domains_result_panel" style="color: red; padding: 10px">
+                
+            </div>
+    </div>
+
+    <div class="add_banner">
+            <h4 style="margin: 0 auto;
+            width: 100%;
+            padding: 20px 0">发送邮件</h4>
+            <div>
+                <span>发件人地址(你自己的星云域名，比如 abc.nas): </span>
+                <br>
+                <input type="text" id="send_mail_from_domain_input" style="width: 100%;">
+                <br>
+                <span>收件人地址(星云域名，比如 zoowii.nas): </span>
+                <br>
+                <input type="text" id="send_mail_to_domain_input" style="width: 100%;">
+                <br>
+                <span>邮件内容(邮件内容会使用收件人公钥进行加密，只有收件人可以凭私钥读取): </span>
+                <textarea id="send_mail_content_input" style="width: 100%;" rows="10"></textarea>
+                <br>
+                <button id="send_mail_btn">发送</button>
+            </div>
+            <div class="hide" id="query_user_domains_result_panel" style="color: red; padding: 10px">
+                
+            </div>
+    </div>
+
+    <div class="add_banner">
+            <h4 style="margin: 0 auto;
+            width: 100%;
+            padding: 20px 0">在星云链上查看域名收到的邮件(在本页头部打开钱包后才可以解密邮件内容)</h4>
+            <div>
+                    <input type="text" id="query_domain_mails_input" style="width: 50%;" placeholder="域名(只能包含字母或数字并且以字母开头)">
+                    <span style="font-weight: bold;
+                    font-size: 28px;
+                    padding-left: 5px;">.nas</span>
+                    <button id="query_domain_mails_btn">查询</button>
+            </div>
+            <div class="hide" id="query_domain_mails_result_panel" style="color: red; padding: 10px"></div>
+        </div>
+
+    <div class="result_faile hide">
+        Failed to find related information. Do you want to <button id="add">add</button> infromation for "<i id="result_faile_add">asd</i>"?
+    </div>
+
+    
+
+    <div class="add_banner hide">
+        <input type="text" id="add_value" placeholder="input contents for your keyword">
+        <button id="push">submit</button>
+    </div>
+</div>
+
+<script>
+
+    "use strict";
+
+    var dappTestNetAddress = "n1zYsYymcnZ3RSYW7529ZfsJLj52cbL1QRL";
+    var dappMainNetAddress = "n1z6zsFpEBi8M7HJvgNrNUQGLKrwxszMuLJ";
+
+    var useTestNet = false;
+
+    var dappAddress = useTestNet ? dappTestNetAddress : dappMainNetAddress;
+
+    var nebulas = require("nebulas"),
+        Account = nebulas.Account,
+        neb = new nebulas.Neb();
+    neb.setRequest(new nebulas.HttpRequest(useTestNet ? "https://testnet.nebulas.io" : "https://mainnet.nebulas.io"));
+
+    function isLetter(str) {
+        return str.length === 1 && str.match(/[a-z]/i);
+    }
+
+    function isDigit(str) {
+        return str.length === 1 && str.match(/\d/i);
+    }
+
+    function isValidHostFormat(host) {
+        if (host === '') {
+            return false;
+        }
+        if(host.length > 20) {
+            return false;
+        }
+        if(!isLetter(host[0])) {
+            return false;
+        }
+        for(var i=1;i<host.length;i++) {
+            if(!isLetter(host[i]) && !isDigit(host[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function Uint8ToBase64(u8Arr){
+        var CHUNK_SIZE = 0x8000; //arbitrary number
+        var index = 0;
+        var length = u8Arr.length;
+        var result = '';
+        var slice;
+        while (index < length) {
+            slice = u8Arr.subarray(index, Math.min(index + CHUNK_SIZE, length)); 
+            result += String.fromCharCode.apply(null, slice);
+            index += CHUNK_SIZE;
+        }
+        return btoa(result);
+    }
+
+    var dappAuthorAccount = Account.fromAddress('n1aJXsZCGw4bsn5UJaqASrsmUqbfVPoeRG6');
+
+    // TODO： 更新domain的content，子域名，转移domain所有权，邮件内容加解密
+
+    // $("#open_wallet_to_get_pub_key_btn").click(function() {
+    //     nebPay.pay();
+    // });
+
+    $("#register_domain_btn").click(function() {
+        var domainHost = $("#register_domain_input").val().trim();
+        if(!domainHost || !isValidHostFormat(domainHost)) {
+            alert("域名格式错误");
+            return;
+        }
+        var pubkey = $("#register_domain_pubkey_input").val().trim();
+        if(pubkey.length<1) {
+            alert("请贴入你的公钥，或者从本网页中打开钱包");
+            return;
+        }
+        var address = $("#register_domain_address_input").val().trim();
+        if(address.length < 1) {
+            alert("请贴入你的地址，或者从本网页中打开钱包");
+            return;
+        }
+       
+        var value = "0";
+        var gas_price = "1000000"
+        var gas_limit = "2000000"
+        var callFunction = "registerDomain";
+        var callArgs = JSON.stringify([domainHost, JSON.stringify({pubKey: pubkey, address: address})]);
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        }
+
+        neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value,'0',gas_price,gas_limit,contract).then(function (resp) {
+            console.log(resp);
+            if(resp.execute_err.length>0) {
+                throw new Error(resp.execute_err);
+            }
+
+            serialNumber = nebPay.call(dappAddress, value, callFunction, callArgs, {    //使用nebpay的call接口去调用合约,
+                listener: cbPush        //设置listener, 处理交易返回信息
+            });
+            startWaitResponse();
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+            // TODO
+            alert(err.message);
+        });
+    });
+
+    function sendMail(fromDomainItem, toDomainItem, encryptedContent) {
+        var value = "0";
+        var gas_price = "1000000"
+        var gas_limit = "2000000"
+        var callFunction = "sendMail";
+        var callArgs = JSON.stringify([fromDomainItem.host, toDomainItem.host, encryptedContent]);
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        }
+
+        neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value,'0',gas_price,gas_limit,contract).then(function (resp) {
+            console.log(resp);
+            if(resp.execute_err.length>0) {
+                throw new Error(resp.execute_err);
+            }
+            serialNumber = nebPay.call(dappAddress, value, callFunction, callArgs, {    //使用nebpay的call接口去调用合约,
+                listener: function() {
+                    alert("邮件发送完成");
+                }
+            });
+            startWaitResponse();
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+            // TODO
+            alert(err.message);
+        });
+    }
+
+    $("#send_mail_btn").click(function() {
+        var toHost = $("#send_mail_to_domain_input").val().trim();
+        if(toHost.endsWith('.nas')) {
+            toHost = toHost.substring(0, toHost.length - '.nas'.length).trim();
+        }
+        if(!toHost) {
+            alert("请填写收件人域名");
+            return;
+        }
+        var fromHost = $("#send_mail_from_domain_input").val().trim();
+        if(fromHost.endsWith('.nas')) {
+            fromHost = fromHost.substring(0, fromHost.length - '.nas'.length).trim();
+        }
+        if(!fromHost) {
+            alert("请填写发件人域名");
+            return;
+        }
+
+        var content = $("#send_mail_content_input").val(); // 邮件内容，需要用对方公钥加密
+
+        var value = "0";
+        var gas_price = "1000000"
+        var gas_limit = "2000000"
+        var callFunction = "getDomains";
+        var callArgs = JSON.stringify([[fromHost, toHost]]);
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        }
+
+        neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value,'0',gas_price,gas_limit,contract).then(function (resp) {
+            console.log(resp);
+            if(resp.execute_err.length>0) {
+                throw new Error(resp.execute_err);
+            }
+            var result = JSON.parse(resp.result);
+            if(!result || result.length<2 || !result[0] || !result[1]) {
+                throw new Error("此域名没找到");
+            }
+            var fromDomainItem = result[0];
+            var toDomainItem = result[1];
+            // 用对方公钥对邮件内容进行加密
+            var toDomainPubKey = JSON.parse(toDomainItem.content)['pubKey'];
+            var toEncryptPubKey = convertHexToBinary('04'+toDomainPubKey); // 加了04前缀的公钥
+            console.log(toEncryptPubKey);
+            eccrypto.encrypt(toEncryptPubKey, Buffer(content)).then(function(encryptedContent) {
+                if(!encryptedContent) {
+                    alert("加密失败");
+                    return;
+                }
+                sendMail(fromDomainItem, toDomainItem, encryptedContent);
+            });
+            
+            // var encryptedContent = content; // FIXME: encrypt.encrypt(content);
+            // if(!encryptedContent) {
+            //     alert("加密失败");
+            //     return;
+            // }
+            // sendMail(fromDomainItem, toDomainItem, encryptedContent);
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+            // TODO
+            alert(err.message);
+        });
+    });
+
+    $("#query_domain_btn").click(function() {
+        var domainHost = $("#query_domain_input").val().trim();
+        if(!domainHost || !isValidHostFormat(domainHost)) {
+            alert("域名格式错误");
+            return;
+        }
+        var value = "0";
+        var gas_price = "1000000"
+        var gas_limit = "2000000"
+        var callFunction = "getDomain";
+        var callArgs = JSON.stringify([domainHost]);
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        }
+
+        neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value,'0',gas_price,gas_limit,contract).then(function (resp) {
+            console.log(resp);
+            if(resp.execute_err.length>0) {
+                throw new Error(resp.execute_err);
+            }
+            var result = JSON.parse(resp.result);
+            if(!result) {
+                throw new Error("此域名没找到");
+            }
+            var $resultPanel = $("#query_domain_info_result_panel");
+            $resultPanel.find('.-domain-owner-span').text(result.owner);
+            $resultPanel.find('.-domain-content-panel').text(result.content);
+            $resultPanel.find('.-domain-host-span').text(result.host);
+            $resultPanel.show();
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+            // TODO
+            alert(err.message);
+        });
+    });
+
+    $("#query_domain_mails_btn").click(function() {
+        var domainHost = $("#query_domain_mails_input").val().trim();
+        if(!domainHost || !isValidHostFormat(domainHost)) {
+            alert("域名格式错误");
+            return;
+        }
+        var value = "0";
+        var gas_price = "1000000"
+        var gas_limit = "2000000"
+        var callFunction = "getHostReceivedMails";
+        var callArgs = JSON.stringify([domainHost]);
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        }
+
+        neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value,'0',gas_price,gas_limit,contract).then(function (resp) {
+            console.log(resp);
+            if(resp.execute_err.length>0) {
+                throw new Error(resp.execute_err);
+            }
+            var mails = JSON.parse(resp.result);
+            var $resultPanel = $("#query_domain_mails_result_panel");
+            $resultPanel.html('');
+            var $ul = $("<ul></ul>");
+            for(var i=0;i<mails.length;i++) {
+                var mail = mails[i];
+                var $li = $("<li></li>");
+                var $div = $("<div></div>");
+                $div.append($("<span>来自: "+mail.fromAddress + "@" + mail.from + ".nas 的邮件</span>"));
+                $div.append($("<br/>"));
+                $div.append($("<span>时间: "+mail.time + "</span>"));
+                $div.append($("<br/>"));
+                $div.append($("<span>密文内容: </span>"));
+                var $contentDiv = $("<div></div>");
+                var encryptedContent = mail.content;
+                var encryptedContentStr = encryptedContent;
+                if(encryptedContent.ciphertext) {
+                    encryptedContentStr = JSON.stringify(encryptedContent.ciphertext.data);
+                }
+                $contentDiv.text(encryptedContentStr);
+                $div.append($contentDiv);
+                if(currentAccount) {
+                    var privateKey = currentAccount.getPrivateKey();
+                    if(encryptedContent.ciphertext) {
+                        encryptedContent.ciphertext = Buffer(encryptedContent.ciphertext.data);
+                        encryptedContent.ephemPublicKey = Buffer(encryptedContent.ephemPublicKey.data);
+                        encryptedContent.iv = Buffer(encryptedContent.iv.data);
+                        encryptedContent.mac = Buffer(encryptedContent.mac.data);
+                    }
+                    (function($div, privateKey, encryptedContent) {
+                        eccrypto.decrypt(privateKey, encryptedContent).then(function(plaintext) {
+                            var $decryptedContentDiv = $("<div></div>");
+                            var decryptedContent = plaintext.toString();
+                            $decryptedContentDiv.text("原文是: " + decryptedContent);
+                            $div.append($decryptedContentDiv);
+                        }).catch(function(e) {
+                            console.log(e);
+                        });
+                    })($div, privateKey, encryptedContent);
+                    // var $decryptedContentDiv = $("<div></div>");
+                    // var decrypt = new JSEncrypt();
+                    // decrypt.setPrivateKey(currentAccount.getPrivateKeyString());
+                    // var decryptedContent = decrypt.decrypt(mail.content);
+                    // $decryptedContentDiv.text(decryptedContent);
+                    // $div.append($decryptedContentDiv);
+                }
+                $li.append($div);
+                $ul.append($li);
+            }
+            $resultPanel.append($ul);
+            $resultPanel.show();
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+            // TODO
+            alert(err.message);
+        });
+    });
+
+    $("#query_user_domains_btn").click(function() {
+        var userAddress = $("#query_user_domains_input").val().trim();
+        if(!userAddress) {
+            alert("请输入要查询的地址");
+            return;
+        }
+        var value = "0";
+        var gas_price = "1000000"
+        var gas_limit = "2000000"
+        var callFunction = "getDomainsUserOwned";
+        var callArgs = JSON.stringify([userAddress]);
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        }
+
+        neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value,'0',gas_price,gas_limit,contract).then(function (resp) {
+            console.log(resp);
+            if(resp.execute_err.length>0) {
+                throw new Error(resp.execute_err);
+            }
+            var result = JSON.parse(resp.result);
+            var $resultPanel = $("#query_user_domains_result_panel");
+            var $ul = $("<ul></ul>");
+            $resultPanel.html('');
+            for(var i=0;i<result.length;i++) {
+                var $li = $("<li></li>");
+                $li.text(result[i].host + '.nas');
+                $ul.append($li);
+            }
+            $resultPanel.append($ul);
+            $resultPanel.show();
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+            // TODO
+            alert(err.message);
+        });
+    });
+
+    $("#toggle-wallet-show-btn").click(function() {
+        var $panel = $("#neb-wallet-panel");
+        if($panel.hasClass('hide')) {
+            $panel.removeClass('hide');
+        } else {
+            $panel.addClass('hide');
+        }
+    });
+
+    //return of search,
+    function cbSearch(resp) {
+        var result = resp.result    ////resp is an object, resp.result is a JSON string
+        console.log("return of rpc call: " + JSON.stringify(result))
+
+        if (result === 'null'){
+            $(".add_banner").addClass("hide");
+            $(".result_success").addClass("hide");
+
+            $("#result_faile_add").text($("#search_value").val())
+
+            $(".result_faile").removeClass("hide");
+        } else{
+            //if result is not null, then it should be "return value" or "error message"
+            try{
+                result = JSON.parse(result)
+            }catch (err){
+                //result is the error message
+            }
+
+            if (!!result.key){      //"return value"
+                $(".add_banner").addClass("hide");
+                $(".result_faile").addClass("hide");
+
+                $("#search_banner").text($("#search_value").val())
+                $("#search_result").text(result.value)
+                $("#search_result_author").text(result.author)
+
+                $(".result_success").removeClass("hide");
+            } else {        //"error message"
+                $(".add_banner").addClass("hide");
+                $(".result_faile").addClass("hide");
+
+                $("#search_banner").text($("#search_value").val())
+                $("#search_result").text(result)
+                $("#search_result_author").text("")
+
+                $(".result_success").removeClass("hide");
+            }
+
+        }
+
+    }
+
+    // // 添加信息功能: 像super-dictionary 中添加词条
+    // $("#add").click(function() {
+    //     $(".result_faile").addClass("hide");
+    //     $(".add_banner").removeClass("hide");
+
+    //     $("#add_value").val("")
+    // })
+
+    var NebPay = require("nebpay");     //https://github.com/nebulasio/nebPay
+    var nebPay = new NebPay();
+    var serialNumber
+
+    $("#push").click(function() {
+
+        var to = dappAddress;
+        var value = "0";
+        var callFunction = "save"
+        var callArgs = "[\"" + $("#search_value").val() + "\",\"" + $("#add_value").val() + "\"]"
+
+        serialNumber = nebPay.call(to, value, callFunction, callArgs, {    //使用nebpay的call接口去调用合约,
+            listener: cbPush        //设置listener, 处理交易返回信息
+        });
+
+        startWaitResponse();
+    });
+
+    var intervalQuery
+
+    function funcIntervalQuery() {
+        nebPay.queryPayInfo(serialNumber)   //search transaction result from server (result upload to server by app)
+            .then(function (resp) {
+                console.log("tx result: " + resp)   //resp is a JSON string
+                var respObject = JSON.parse(resp)
+                if(respObject.code === 0){
+                    alert("钱包操作完成")
+                    clearInterval(intervalQuery)
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+            });
+    }
+
+    function cbPush(resp) {
+        console.log("response of push: " + JSON.stringify(resp))
+    }
+
+    function startWaitResponse() {
+        intervalQuery = setInterval(function () {
+                funcIntervalQuery();
+            }, 5000);
+    }
+
+</script>
+
+<script src="./js/app.bundle.js"></script>
+</body>
+
+</html>
