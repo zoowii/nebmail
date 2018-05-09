@@ -22246,10 +22246,19 @@ exports.createContext = Script.createContext = function (context) {
 
 },{}],153:[function(require,module,exports){
 (function (Buffer){
+var originSubtle = null;
+var browserCrypto = window.crypto || window.msCrypto; //for IE11
+if(browserCrypto) {
+    originSubtle = browserCrypto.subtle || browserCrypto.webkitSubtle
+}
+
 var crypto = require("crypto");
 var eccrypto = require("eccrypto");
 
 window.crypto = crypto;
+if(!crypto.subtle) {
+    crypto.subtle = originSubtle;
+}
 window.eccrypto = eccrypto;
 
 function convertHexToBinary(hex) {
