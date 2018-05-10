@@ -656,7 +656,7 @@
 					var $div = $("<div></div>");
 					$div.append($("<span>来自: " + mail.fromAddress + "@" + mail.from + ".nas 的邮件</span>"));
 					$div.append($("<br/>"));
-					$div.append($("<span>时间: " + mail.time + "</span>"));
+					$div.append($("<span>时间: " + new Date(mail.time * 1000).toLocaleString() + "</span>"));
 					$div.append($("<br/>"));
 					$div.append($("<span>密文内容: </span>"));
 					var $contentDiv = $("<div></div>");
