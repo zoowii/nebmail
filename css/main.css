@@ -134,3 +134,12 @@ p {
     font-size: 14px;
     margin: 0;
 }
+
+#notify-install-extension {
+    line-height: 60px;
+    height: 60px;
+    font-size: 18px;
+    color: red;
+    width: 80%;
+    margin: 0 auto;
+}
