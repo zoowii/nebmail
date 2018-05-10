@@ -534,7 +534,7 @@
             "args": callArgs
         }
 
-        neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value,'0',gas_price,gas_limit,contract).then(function (resp) {
+        neb.api.call(fromDomainItem.owner, dappAddress, value,'0',gas_price,gas_limit,contract).then(function (resp) {
             console.log(resp);
             if(resp.execute_err.length>0) {
                 throw new Error(resp.execute_err);
