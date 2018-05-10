@@ -1,6 +1,6 @@
 .logo {
     width: 60%;
-    height: 80px;
+    /* height: 80px; */
     margin: auto;
 }
 
@@ -124,4 +124,13 @@ p {
 
 .-domain-content-panel {
     word-wrap: break-word;
+}
+
+.author2 {
+
+}
+
+.author2 p {
+    font-size: 14px;
+    margin: 0;
 }
