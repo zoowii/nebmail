@@ -5,7 +5,7 @@ some smart contracts for nas blockchain
 
 * `npm install`
 * `npm install -g browserify`
-* `browserify js/app.js -o dist/app.bundle.js`
+* `browserify js/app.js -o js/app.bundle.js`
 
 # 域名合约 name_service
 

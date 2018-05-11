@@ -136,10 +136,27 @@ p {
 }
 
 #notify-install-extension {
-    line-height: 60px;
-    height: 60px;
     font-size: 18px;
     color: red;
-    width: 80%;
     margin: 0 auto;
+    margin-bottom: 20px;
+}
+
+.contract-address-show {
+    color: red !important;
+}
+
+.contract-address-show:hover {
+    text-decoration: underline !important;
+}
+
+#error-notify-panel {
+    display: none;
+    position: fixed;
+    right: 20px;
+    top: 100px;
+    width: 300px;
+    height: 80px;
+    word-break: break-all;
+    font-size: 16px;
 }

@@ -110,7 +110,7 @@
 					<img src="img/logo.png" style="width: 80px; margin-top: 4px; float: left;" alt="">
 					<div class="name" style="font-size: 40px; word-break: keep-all;">星云邮件，一个去中心化的加密邮件服务</div>
 				</div>
-				<div id="notify-install-extension">
+				<div id="notify-install-extension" class="alert alert-info" role="alert">
 					NOTE: 为了使用星云邮件服务，请先安装
 					<a target="_blank" href="https://github.com/ChengOrangeJu/WebExtensionWallet">星云链浏览器插件</a>
 				</div>
@@ -121,10 +121,13 @@
 					</a>
 				</div>
 				<div class="" style="margin: auto;">
-					<div class="author2">
-						<p>捐赠地址:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n1Umdtjb2BEVT1EqWnz3FwtkcD4NcpNfmg4</p>
-						<p>邮件合约地址: &nbsp;&nbsp;<span class="contract-address-show"></span></p>
+					<div class="author2 alert alert-primary" role="alert">
+						<p>捐赠地址:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n1aJXsZCGw4bsn5UJaqASrsmUqbfVPoeRG6 <button class="btn btn-primary btn-sm" id="donate-btn">捐赠</button></p>
+						<p>邮件合约地址: &nbsp;&nbsp;<a class="contract-address-show" target="_blank" href="javascript: void(0)"></a></p>
 					</div>
+				</div>
+				<div id="error-notify-panel" class="alert alert-danger" role="alert">
+
 				</div>
 
 				<ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -351,10 +354,12 @@
 				account.fromKey(fileJson, password);
 
 				currentAccount = account;
+				simulateFromAddress = currentAccount.getAddressString();
 
 				$("#register_domain_address_input").val(account.getAddressString());
 				$("#register_domain_pubkey_input").val(account.getPublicKeyString());
-				alert("打开钱包成功");
+
+				showSuccessInfo("打开钱包成功");
 			} catch (e) {
 				// this catches e thrown by nebulas.js!account
 
@@ -390,11 +395,12 @@
 		var dappTestNetAddress = "n1zYsYymcnZ3RSYW7529ZfsJLj52cbL1QRL";
 		var dappMainNetAddress = "n1z6zsFpEBi8M7HJvgNrNUQGLKrwxszMuLJ";
 
-		var useTestNet = false;
+		var useTestNet = location.search.indexOf('testnet=true')>=0 ? true : false;
 
 		var dappAddress = useTestNet ? dappTestNetAddress : dappMainNetAddress;
 
 		$(".contract-address-show").text(dappAddress);
+		$(".contract-address-show").attr('href', "https://explorer.nebulas.io/#/address/" + dappAddress);
 
 		var nebulas = require("nebulas"),
 			Account = nebulas.Account,
@@ -441,25 +447,62 @@
 			return btoa(result);
 		}
 
-		var dappAuthorAccount = Account.fromAddress('n1aJXsZCGw4bsn5UJaqASrsmUqbfVPoeRG6');
+		function showErrorInfo(error) {
+			console.log('info: ', error);
+			if(error.msg) {
+				error = error.msg;
+			}
+			error = error || "出现错误";
+			$("#error-notify-panel").html(error);
+			$("#error-notify-panel").show(200);
+			setTimeout(function() {
+				$("#error-notify-panel").hide(1000);
+			}, 4000);
+		}
 
+		var dappAuthorAccount = Account.fromAddress('n1aJXsZCGw4bsn5UJaqASrsmUqbfVPoeRG6'); // 不要用这个地址太多次
+		var simulateFromAddress = dappAuthorAccount.getAddressString(); // 模拟执行时使用的地址
+
+		// TODO: 邮件内容长度限制目前15字符，code length error，感觉不是参数长度限制，其他方面限制。需要想办法绕过
+
+		$(function() {
+			setTimeout(function() {
+				if (!window.webExtensionWallet) {
+					showErrorInfo('扩展钱包未安装，请先安装');
+					return
+				}
+
+			}, 3000);
+		});
 		// TODO： 更新domain的content，子域名，转移domain所有权
+
+		$("#donate-btn").click(function() {
+			var toAddress = dappAuthorAccount.getAddressString();
+			var value = "1";
+			var gas_price = "1000000";
+			var gas_limit = "2000000";
+
+			callOnChainTx(simulateFromAddress, toAddress, value, '0', gas_price, gas_limit, null, null,
+				function(data) {
+					showSuccessInfo("捐赠成功，你得到一份作者的感谢！");
+				});
+		});
 
 
 		$("#register_domain_btn").click(function () {
 			var domainHost = $("#register_domain_input").val().trim();
 			if (!domainHost || !isValidHostFormat(domainHost)) {
-				alert("域名格式错误");
+				showErrorInfo("域名格式错误");
 				return;
 			}
 			var pubkey = $("#register_domain_pubkey_input").val().trim();
 			if (pubkey.length < 1) {
-				alert("请贴入你的公钥，或者从本网页中打开钱包");
+				showErrorInfo("请贴入你的公钥，或者从本网页中打开钱包");
 				return;
 			}
 			var address = $("#register_domain_address_input").val().trim();
 			if (address.length < 1) {
-				alert("请贴入你的地址，或者从本网页中打开钱包");
+				showErrorInfo("请贴入你的地址，或者从本网页中打开钱包");
 				return;
 			}
 
@@ -468,26 +511,11 @@
 			var gas_limit = "2000000"
 			var callFunction = "registerDomain";
 			var callArgs = JSON.stringify([domainHost, JSON.stringify({ pubKey: pubkey, address: address })]);
-			var contract = {
-				"function": callFunction,
-				"args": callArgs
-			}
 
-			neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
-				console.log(resp);
-				if (resp.execute_err.length > 0) {
-					throw new Error(resp.execute_err);
-				}
-
-				serialNumber = nebPay.call(dappAddress, value, callFunction, callArgs, {    //使用nebpay的call接口去调用合约,
-					listener: cbPush        //设置listener, 处理交易返回信息
+			callOnChainTx(simulateFromAddress, dappAddress, value, '0', gas_price, gas_limit, callFunction, callArgs,
+				function(data) {
+					showSuccessInfo("域名注册成功");
 				});
-				startWaitResponse();
-			}).catch(function (err) {
-				console.log("error:" + err.message)
-				// TODO
-				alert(err.message);
-			});
 		});
 
 		function sendMail(fromDomainItem, toDomainItem, encryptedContent) {
@@ -496,27 +524,11 @@
 			var gas_limit = "2000000"
 			var callFunction = "sendMail";
 			var callArgs = JSON.stringify([fromDomainItem.host, toDomainItem.host, encryptedContent]);
-			var contract = {
-				"function": callFunction,
-				"args": callArgs
-			}
 
-			neb.api.call(fromDomainItem.owner, dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
-				console.log(resp);
-				if (resp.execute_err.length > 0) {
-					throw new Error(resp.execute_err);
-				}
-				serialNumber = nebPay.call(dappAddress, value, callFunction, callArgs, {    //使用nebpay的call接口去调用合约,
-					listener: function () {
-						alert("邮件发送完成");
-					}
+			callOnChainTx(simulateFromAddress, dappAddress, value, '0', gas_price, gas_limit, callFunction, callArgs,
+				function(data) {
+					showSuccessInfo("邮件发送完成");
 				});
-				startWaitResponse();
-			}).catch(function (err) {
-				console.log("error:" + err.message)
-				// TODO
-				alert(err.message);
-			});
 		}
 
 		$("#send_mail_btn").click(function () {
@@ -525,7 +537,7 @@
 				toHost = toHost.substring(0, toHost.length - '.nas'.length).trim();
 			}
 			if (!toHost) {
-				alert("请填写收件人域名");
+				showErrorInfo("请填写收件人域名");
 				return;
 			}
 			var fromHost = $("#send_mail_from_domain_input").val().trim();
@@ -533,11 +545,15 @@
 				fromHost = fromHost.substring(0, fromHost.length - '.nas'.length).trim();
 			}
 			if (!fromHost) {
-				alert("请填写发件人域名");
+				showErrorInfo("请填写发件人域名");
 				return;
 			}
 
-			var content = $("#send_mail_content_input").val(); // 邮件内容，需要用对方公钥加密
+			var content = $("#send_mail_content_input").val().trim(); // 邮件内容，需要用对方公钥加密
+			if(content.length > 15) {
+				showErrorInfo("因为智能合约参数长度限制，暂时邮件内容限制15个字");
+				return;
+			}
 
 			var value = "0";
 			var gas_price = "1000000"
@@ -549,7 +565,7 @@
 				"args": callArgs
 			}
 
-			neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
+			neb.api.call(simulateFromAddress, dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
 				console.log(resp);
 				if (resp.execute_err.length > 0) {
 					throw new Error(resp.execute_err);
@@ -566,29 +582,21 @@
 				console.log(toEncryptPubKey);
 				eccrypto.encrypt(toEncryptPubKey, Buffer(content)).then(function (encryptedContent) {
 					if (!encryptedContent) {
-						alert("加密失败");
+						showErrorInfo("加密失败");
 						return;
 					}
 					sendMail(fromDomainItem, toDomainItem, encryptedContent);
 				});
-
-				// var encryptedContent = content; // FIXME: encrypt.encrypt(content);
-				// if(!encryptedContent) {
-				//     alert("加密失败");
-				//     return;
-				// }
-				// sendMail(fromDomainItem, toDomainItem, encryptedContent);
 			}).catch(function (err) {
-				console.log("error:" + err.message)
-				// TODO
-				alert(err.message);
+				console.log("error:" + err.message);
+				showErrorInfo(err.message);
 			});
 		});
 
 		$("#query_domain_btn").click(function () {
 			var domainHost = $("#query_domain_input").val().trim();
 			if (!domainHost || !isValidHostFormat(domainHost)) {
-				alert("域名格式错误");
+				showErrorInfo("域名格式错误");
 				return;
 			}
 			var value = "0";
@@ -601,7 +609,7 @@
 				"args": callArgs
 			}
 
-			neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
+			neb.api.call(simulateFromAddress, dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
 				console.log(resp);
 				if (resp.execute_err.length > 0) {
 					throw new Error(resp.execute_err);
@@ -616,16 +624,14 @@
 				$resultPanel.find('.-domain-host-span').text(result.host);
 				$resultPanel.show();
 			}).catch(function (err) {
-				console.log("error:" + err.message)
-				// TODO
-				alert(err.message);
+				showErrorInfo(err.message);
 			});
 		});
 
 		$("#query_domain_mails_btn").click(function () {
 			var domainHost = $("#query_domain_mails_input").val().trim();
 			if (!domainHost || !isValidHostFormat(domainHost)) {
-				alert("域名格式错误");
+				showErrorInfo("域名格式错误");
 				return;
 			}
 			var value = "0";
@@ -638,7 +644,7 @@
 				"args": callArgs
 			}
 
-			neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
+			neb.api.call(simulateFromAddress, dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
 				console.log(resp);
 				if (resp.execute_err.length > 0) {
 					throw new Error(resp.execute_err);
@@ -646,6 +652,10 @@
 				var mails = JSON.parse(resp.result);
 				var $resultPanel = $("#query_domain_mails_result_panel");
 				$resultPanel.html('');
+				if(mails.length < 1) {
+					showErrorInfo("此地址至今没有收到邮件");
+					return;
+				}
 				var $ul = $("<ul></ul>");
 				for (var i = 0; i < mails.length; i++) {
 					var mail = mails[i];
@@ -692,16 +702,14 @@
 				$resultPanel.append($ul);
 				$resultPanel.show();
 			}).catch(function (err) {
-				console.log("error:" + err.message)
-				// TODO
-				alert(err.message);
+				showErrorInfo(err.message);
 			});
 		});
 
 		$("#query_user_domains_btn").click(function () {
 			var userAddress = $("#query_user_domains_input").val().trim();
 			if (!userAddress) {
-				alert("请输入要查询的地址");
+				showErrorInfo("请输入要查询的地址");
 				return;
 			}
 			var value = "0";
@@ -714,7 +722,7 @@
 				"args": callArgs
 			}
 
-			neb.api.call(dappAuthorAccount.getAddressString(), dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
+			neb.api.call(simulateFromAddress, dappAddress, value, '0', gas_price, gas_limit, contract).then(function (resp) {
 				console.log(resp);
 				if (resp.execute_err.length > 0) {
 					throw new Error(resp.execute_err);
@@ -723,6 +731,10 @@
 				var $resultPanel = $("#query_user_domains_result_panel");
 				var $ul = $("<ul></ul>");
 				$resultPanel.html('');
+				if(result.length<1) {
+					showErrorInfo("此地址至今没有拥有星云域名");
+					return;
+				}
 				for (var i = 0; i < result.length; i++) {
 					var $li = $("<li></li>");
 					$li.text(result[i].host + '.nas');
@@ -731,9 +743,7 @@
 				$resultPanel.append($ul);
 				$resultPanel.show();
 			}).catch(function (err) {
-				console.log("error:" + err.message)
-				// TODO
-				alert(err.message);
+				showErrorInfo(err.message);
 			});
 		});
 
@@ -815,27 +825,30 @@
 		function funcIntervalQuery() {
 			nebPay.queryPayInfo(serialNumber)   //search transaction result from server (result upload to server by app)
 				.then(function (resp) {
-					var respObject = JSON.parse(resp)
-					if (respObject.code === 1 && respObject.msg && respObject.msg.indexOf('payId') >= 0 && respObject.msg.endsWith('does not exist')) {
-						if (!alertedInstallExtension) {
-							alertedInstallExtension = true;
-							alert("请确认您已经安装了星云链浏览器插件");
-							return;
-						}
-					}
-					console.log("tx result: " + resp)   //resp is a JSON string
+					var respObject = JSON.parse(resp);
+					// TODO: 错误处理;
+					console.log("tx result: " + resp);   //resp is a JSON string
 					if (respObject.code === 0) {
-						alert("钱包操作完成")
-						clearInterval(intervalQuery)
+						clearInterval(intervalQuery);
+						showErrorInfo("钱包操作完成");
 					}
 				})
 				.catch(function (err) {
+					// TODO: 超时处理
 					console.log(err);
 				});
 		}
 
 		function cbPush(resp) {
-			console.log("response of push: " + JSON.stringify(resp))
+			showSuccessInfo(resp);
+		}
+
+		function showSuccessInfo(msg) {
+			if(msg.txhash) {
+				showErrorInfo("交易发送成功");
+			} else {
+				showErrorInfo(msg.toString() || "交易发送成功");
+			}
 		}
 
 		function startWaitResponse() {
