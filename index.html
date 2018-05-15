@@ -550,8 +550,8 @@
 			}
 
 			var content = $("#send_mail_content_input").val().trim(); // 邮件内容，需要用对方公钥加密
-			if(content.length > 15) {
-				showErrorInfo("因为智能合约参数长度限制，暂时邮件内容限制15个字");
+			if(content.length > 2000) {
+				showErrorInfo("因为智能合约参数长度限制，暂时邮件内容限制2000个字");
 				return;
 			}
 
