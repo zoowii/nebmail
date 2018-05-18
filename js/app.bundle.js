@@ -22383,7 +22383,33 @@ function callOnChainTx(simulateFromAddress, toAddress, value, simulateAddressNon
     });
 }
 
+function directCallOnChainTx(toAddress, value, callFunction, callArgs, sendTxHandler, txConfirmHandler, errorHandler) {
+    var contract = callFunction ? {
+        "function": callFunction,
+        "args": callArgs
+    } : null;
+    errorHandler = errorHandler || showErrorInfo;
+    var serialNumber = nebPay.call(toAddress, value, callFunction, callArgs, {
+        listener: function(data) {
+            if(data.txhash) {
+                (sendTxHandler || showSuccessInfo)(data); // 不结束promise，为了等待链上确认结果
+            } else {
+                promise.reject(data);
+            }
+        }
+    });
+    var promise = waitTxResponse(serialNumber);
+    promise.then(function(data) {
+            if(txConfirmHandler) {
+                txConfirmHandler(data);
+            }
+        }, function(err) {
+            errorHandler(err);
+        });
+}
+
 window.callOnChainTx = callOnChainTx;
+window.directCallOnChainTx = directCallOnChainTx;
 }).call(this,require("buffer").Buffer)
 },{"buffer":47,"crypto":55,"eccrypto":156}],154:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)

@@ -7,10 +7,7 @@ some smart contracts for nas blockchain
 * `npm install -g browserify`
 * `browserify js/app.js -o js/app.bundle.js`
 
-# 域名合约 name_service
+# 邮件合约 
 
-# 邮件合约 mail
+* `smartContract/mail.js`
 
-# TODO
-
-* 增加切换主网和测试网的功能

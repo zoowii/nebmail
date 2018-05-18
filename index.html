@@ -525,7 +525,7 @@
 			var callFunction = "sendMail";
 			var callArgs = JSON.stringify([fromDomainItem.host, toDomainItem.host, encryptedContent]);
 
-			callOnChainTx(simulateFromAddress, dappAddress, value, '0', gas_price, gas_limit, callFunction, callArgs,
+			callOnChainTx(fromDomainItem.owner, dappAddress, value, '0', gas_price, gas_limit, callFunction, callArgs,
 				function(data) {
 					showSuccessInfo("邮件发送完成");
 				});
@@ -867,7 +867,7 @@
 
 	</script>
 
-	<script src="./js/app.bundle.js"></script>
+	<script src="./js/app.bundle.js?v=1"></script>
 
 </body>
 
